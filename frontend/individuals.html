@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>个体管理 · 复杂系统模拟仿真平台</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="topnav" id="topnav"></nav>
+  <main class="container">
+    <h1 class="page-title">个体管理</h1>
+    <p class="page-sub">查看、筛选与检索车辆 / 动物 / 人等个体状态。</p>
+
+    <div class="card">
+      <div class="row between">
+        <div class="row">
+          <select id="runSelect" style="max-width:380px"></select>
+          <input id="stepInput" type="number" min="0" value="0" style="width:100px" title="时间步">
+          <button class="btn primary small" id="loadBtn">加载</button>
+        </div>
+        <div class="row gap-6">
+          <input id="searchInput" placeholder="按 id 检索…" style="width:180px">
+          <select id="typeFilter" style="width:140px"><option value="">全部类型</option></select>
+          <select id="stateFilter" style="width:140px"><option value="">全部状态</option></select>
+        </div>
+      </div>
+      <p class="muted small" id="summary" style="margin:12px 0 0"></p>
+    </div>
+
+    <div class="card">
+      <div style="overflow-x:auto">
+        <table id="itable"></table>
+      </div>
+      <div class="row between" style="margin-top:12px">
+        <span class="muted small" id="pageInfo"></span>
+        <div class="row gap-6">
+          <button class="btn small" id="prevBtn">上一页</button>
+          <button class="btn small" id="nextBtn">下一页</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/common.js"></script>
+  <script src="/js/individuals.js"></script>
+</body>
+</html>

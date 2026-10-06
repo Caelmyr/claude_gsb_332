@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>总览 · 复杂系统模拟仿真平台</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="topnav" id="topnav"></nav>
+  <main class="container">
+    <h1 class="page-title">复杂系统模拟仿真平台</h1>
+    <p class="page-sub">交通 · 生态 · 传染病 —— 元胞自动机与智能体模型（Agent-Based Model），实时步进、批量运行、JSON 分片存储与快速回放。</p>
+
+    <div class="grid grid-4" id="stats"></div>
+
+    <div class="card">
+      <h2>快速开始</h2>
+      <div class="row">
+        <select id="quickScene" style="max-width:420px"></select>
+        <button class="btn primary" id="quickGo">创建运行并进入实时可视化</button>
+      </div>
+      <p class="muted small" style="margin:10px 0 0">选择一个示例场景创建运行；运行将按时间步分片写入 data/runs/ 下，可随时回到本页或历史场景页继续。</p>
+    </div>
+
+    <div class="grid grid-3" id="cards"></div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/common.js"></script>
+  <script src="/js/index.js"></script>
+</body>
+</html>

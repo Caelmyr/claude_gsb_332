@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>对比实验 · 复杂系统模拟仿真平台</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="topnav" id="topnav"></nav>
+  <main class="container">
+    <h1 class="page-title">对比实验</h1>
+    <p class="page-sub">多组参数并行运行，叠加对比不同策略/参数的效果。</p>
+
+    <div class="card">
+      <h2>新建对比实验</h2>
+      <div class="grid grid-2">
+        <div class="field"><label>实验名称</label><input id="expName" placeholder="例如：封锁强度对比"></div>
+        <div class="field"><label>基础场景</label><select id="expScene"></select></div>
+      </div>
+      <div class="field" style="max-width:220px"><label>运行步数</label><input id="expSteps" type="number" value="200" min="1"></div>
+
+      <h3>参数组</h3>
+      <div id="groups"></div>
+      <button class="btn small" id="addGroup">+ 添加参数组</button>
+
+      <div class="row" style="margin-top:16px">
+        <button class="btn primary" id="createExp">运行对比实验</button>
+        <span class="muted small" id="expStatus"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>已有实验</h2>
+      <div id="expList"></div>
+    </div>
+
+    <div class="card" id="chartCard" style="display:none">
+      <div class="row between">
+        <h2 id="chartTitle" style="margin:0"></h2>
+        <div class="row gap-6">
+          <label class="muted small">对比指标</label>
+          <select id="metricSel" style="width:200px"></select>
+        </div>
+      </div>
+      <div class="chart" id="chart"></div>
+    </div>
+  </main>
+
+  <script src="/vendor/echarts.min.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/common.js"></script>
+  <script src="/js/compare.js"></script>
+</body>
+</html>

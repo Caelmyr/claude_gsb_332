@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>统计图表 · 复杂系统模拟仿真平台</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="topnav" id="topnav"></nav>
+  <main class="container">
+    <h1 class="page-title">统计图表</h1>
+    <p class="page-sub">ECharts 绘制各统计量随时间的演化曲线。</p>
+
+    <div class="card">
+      <div class="row between">
+        <div class="row">
+          <select id="runSelect" style="max-width:420px"></select>
+          <button class="btn primary small" id="loadBtn">绘制</button>
+        </div>
+        <div class="row gap-6" id="metricChecks"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="chart" id="chart"></div>
+    </div>
+  </main>
+
+  <script src="/vendor/echarts.min.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/common.js"></script>
+  <script src="/js/stats.js"></script>
+</body>
+</html>

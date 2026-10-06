@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>报告生成 · 复杂系统模拟仿真平台</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="topnav" id="topnav"></nav>
+  <main class="container">
+    <h1 class="page-title">报告生成</h1>
+    <p class="page-sub">自动汇总峰值、终态与领域小结，生成运行报告。</p>
+
+    <div class="card">
+      <div class="row between">
+        <div class="row">
+          <select id="runSelect" style="max-width:420px"></select>
+          <button class="btn primary" id="genBtn">生成报告</button>
+        </div>
+        <span class="muted small" id="genStatus"></span>
+      </div>
+    </div>
+
+    <div id="reportBody"></div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/common.js"></script>
+  <script src="/js/report.js"></script>
+</body>
+</html>

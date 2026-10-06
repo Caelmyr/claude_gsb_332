@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>数据导出 · 复杂系统模拟仿真平台</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="topnav" id="topnav"></nav>
+  <main class="container">
+    <h1 class="page-title">数据导出</h1>
+    <p class="page-sub">导出统计 CSV、完整运行 JSON 或某一步的个体状态 JSON。</p>
+
+    <div class="card">
+      <div class="field" style="max-width:480px">
+        <label>选择运行</label>
+        <select id="runSelect"></select>
+      </div>
+      <div id="formats"></div>
+      <div class="field" id="stepField" style="max-width:220px; display:none">
+        <label>时间步</label>
+        <input id="stepInput" type="number" min="0" value="0">
+      </div>
+      <button class="btn primary" id="dlBtn">导出下载</button>
+      <span class="muted small" id="dlStatus"></span>
+    </div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/common.js"></script>
+  <script src="/js/export.js"></script>
+</body>
+</html>

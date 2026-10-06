@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>干预措施 · 复杂系统模拟仿真平台</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="topnav" id="topnav"></nav>
+  <main class="container">
+    <h1 class="page-title">干预措施</h1>
+    <p class="page-sub">在运行中施加政策 / 药物 / 捕杀等干预，并查看干预日志。</p>
+
+    <div class="card">
+      <div class="row">
+        <select id="runSelect" style="max-width:420px"></select>
+        <button class="btn small" id="refreshBtn">刷新</button>
+      </div>
+      <p class="muted small" id="runInfo" style="margin:10px 0 0"></p>
+    </div>
+
+    <div class="grid" style="grid-template-columns:1fr 1fr; gap:18px">
+      <div>
+        <div class="card">
+          <h2>可施加干预</h2>
+          <div id="itvForms"></div>
+        </div>
+        <div class="card">
+          <h2>定时干预（随运行自动触发）</h2>
+          <div id="scheduled"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>干预日志</h2>
+        <div style="overflow-x:auto"><table id="events"></table></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/common.js"></script>
+  <script src="/js/intervention.js"></script>
+</body>
+</html>

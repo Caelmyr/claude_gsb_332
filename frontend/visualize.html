@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>实时可视化 · 复杂系统模拟仿真平台</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="topnav" id="topnav"></nav>
+  <main class="container">
+    <h1 class="page-title">实时可视化</h1>
+    <p class="page-sub">Canvas 实时渲染仿真过程，逐帧步进、暂停与调速。</p>
+
+    <div class="card">
+      <div class="row between">
+        <div class="row">
+          <select id="runSelect" style="max-width:420px"></select>
+          <button class="btn small" id="refreshRuns">刷新</button>
+        </div>
+        <div class="row gap-6">
+          <button class="btn success" id="btnStart">▶ 开始</button>
+          <button class="btn" id="btnPause">⏸ 暂停</button>
+          <button class="btn" id="btnStep">单步</button>
+          <button class="btn danger" id="btnReset">重置</button>
+        </div>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <label class="muted small">速度</label>
+        <select id="speedSel" style="width:110px">
+          <option value="60">快</option>
+          <option value="160" selected>中</option>
+          <option value="400">慢</option>
+        </select>
+        <label class="muted small">每帧步数</label>
+        <select id="stepsPerTick" style="width:110px">
+          <option value="1" selected>1</option>
+          <option value="5">5</option>
+          <option value="10">10</option>
+        </select>
+        <span class="muted small" id="statusLine">未选择运行</span>
+      </div>
+    </div>
+
+    <div class="grid grid-4" id="statTiles"></div>
+
+    <div class="card">
+      <div class="canvas-wrap"><canvas id="canvas"></canvas></div>
+      <div class="legend" id="legend"></div>
+    </div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/common.js"></script>
+  <script src="/js/render.js"></script>
+  <script src="/js/visualize.js"></script>
+</body>
+</html>

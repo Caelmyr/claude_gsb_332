@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>回放与时间轴 · 复杂系统模拟仿真平台</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="topnav" id="topnav"></nav>
+  <main class="container">
+    <h1 class="page-title">回放与时间轴</h1>
+    <p class="page-sub">拖动时间轴，快速回放任意时间步的个体快照（按时间步分片存储）。</p>
+
+    <div class="card">
+      <div class="row between">
+        <div class="row">
+          <select id="runSelect" style="max-width:420px"></select>
+          <button class="btn small" id="refreshBtn">刷新</button>
+        </div>
+        <div class="row gap-6">
+          <button class="btn primary" id="playBtn">▶ 播放</button>
+          <span class="pill" id="stepLabel">第 0 步</span>
+        </div>
+      </div>
+      <input type="range" class="timeline" id="timeline" min="0" max="0" value="0" step="1">
+      <div class="row between muted small">
+        <span id="t0">0</span><span id="t1">0</span>
+      </div>
+    </div>
+
+    <div class="grid grid-4" id="statTiles"></div>
+
+    <div class="card">
+      <div class="canvas-wrap"><canvas id="canvas"></canvas></div>
+      <div class="legend" id="legend"></div>
+    </div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/common.js"></script>
+  <script src="/js/render.js"></script>
+  <script src="/js/replay.js"></script>
+</body>
+</html>
