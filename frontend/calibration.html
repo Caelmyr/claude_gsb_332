@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>参数校准 · 复杂系统模拟仿真平台</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="topnav" id="topnav"></nav>
+  <main class="container">
+    <h1 class="page-title">参数校准</h1>
+    <p class="page-sub">给定一条真实观测曲线（如每日感染人数），自动在指定参数的上下界内搜索最优组合：确定性拉丁超立方全局采样 → 多起点模式搜索局部求精 → 独立随机种子集复核，输出拟合误差、候选排名与诊断信息，并叠加对比仿真曲线与目标曲线。</p>
+
+    <div class="grid" style="grid-template-columns: 380px 1fr; align-items:start">
+      <div>
+        <div class="card">
+          <h2>1 · 模型与指标</h2>
+          <div class="field"><label>领域</label>
+            <select id="calDomain"></select></div>
+          <div class="field"><label>模型</label>
+            <select id="calModel"></select></div>
+          <div class="field"><label>拟合的统计指标</label>
+            <select id="calMetric"></select></div>
+          <div class="field"><label>校准名称</label>
+            <input id="calName" placeholder="例如：β/γ 拟合真实感染曲线"></div>
+        </div>
+
+        <div class="card">
+          <h2>2 · 待校准参数与上下界</h2>
+          <p class="muted small" style="margin-top:0">勾选参数并设置下界/上界；未勾选的参数保持场景默认值固定不变。</p>
+          <div id="paramList"></div>
+          <h3 style="margin-top:12px">高级设置</h3>
+          <div class="grid grid-2">
+            <div class="field"><label>运行步数</label><input id="calSteps" type="number" value="100" min="1"></div>
+            <div class="field"><label>随机种子（可复现）</label><input id="calSeed" type="number" value="12345"></div>
+            <div class="field"><label>寻优重复次数</label><input id="calReps" type="number" value="3" min="1" title="每组候选参数用多个固定种子仿真取均值，压制随机性"></div>
+            <div class="field"><label>复核种子数</label><input id="calConfirm" type="number" value="6" min="1" title="最终候选在另一组不相交种子上复核，防止“撞运气”"></div>
+            <div class="field"><label>损失函数</label>
+              <select id="calLoss">
+                <option value="nrmse">归一化 RMSE（推荐）</option>
+                <option value="rmse">RMSE（原始量纲）</option>
+                <option value="mae">MAE 平均绝对误差</option>
+                <option value="mape">MAPE 相对误差</option>
+                <option value="log_rmse">log(1+y) RMSE（兼顾早期）</option>
+              </select></div>
+            <div class="field"><label>异常点处理</label>
+              <select id="calOutlier">
+                <option value="flag">标记并排除（推荐）</option>
+                <option value="winsor">缩尾修正后保留</option>
+                <option value="keep">全部保留</option>
+              </select></div>
+            <div class="field"><label>每步对应时间</label><input id="calTps" type="number" value="1" step="any" min="0.0001" title="目标时间与仿真步数不一致时：target_t = offset + step × 该值"></div>
+            <div class="field"><label>时间起点偏移</label><input id="calOffset" type="number" value="0" step="any"></div>
+            <div class="field"><label>超出仿真窗口</label>
+              <select id="calExtrap"><option value="skip">跳过该目标点（推荐）</option>
+                <option value="clip">取边界值</option></select></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>3 · 目标曲线</h2>
+          <div class="field">
+            <label>粘贴数据（每行 "时间,数值"，首行可为表头；空值/缺测留空即可）</label>
+            <textarea id="calTarget" rows="7" placeholder="day,infected&#10;0,5&#10;7,42&#10;14,180&#10;21,&#10;28,900"></textarea>
+          </div>
+          <div class="row gap-6">
+            <button class="btn small" id="btnPreview">清洗与预览</button>
+            <button class="btn small" id="btnDemo">载入示例数据</button>
+          </div>
+          <div id="previewNote" class="notice" style="display:none;margin-top:10px"></div>
+        </div>
+
+        <div class="card">
+          <div class="row between">
+            <button class="btn primary" id="btnRun">开始校准</button>
+            <button class="btn danger small" id="btnStop" style="display:none">中止</button>
+          </div>
+          <div id="runStatus" class="muted small" style="margin-top:8px"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card" id="chartCard" style="display:none">
+          <div class="row between">
+            <h2 style="margin:0">仿真曲线 vs 目标曲线</h2>
+            <span class="muted small" id="overlayMeta"></span>
+          </div>
+          <div class="chart" id="overlayChart" style="height:340px"></div>
+          <div id="diagBox"></div>
+        </div>
+
+        <div class="card" id="resultCard" style="display:none">
+          <h2>最优参数与拟合误差</h2>
+          <div id="bestBox"></div>
+          <h3>候选排名（按独立复核误差）</h3>
+          <div class="table-wrap"><table id="rankTable"></table></div>
+          <h3>参数灵敏度（最优点附近）</h3>
+          <div class="table-wrap"><table id="sensTable"></table></div>
+          <h3>残差明细（对齐后的目标时间点）</h3>
+          <div class="table-wrap" style="max-height:260px;overflow:auto">
+            <table id="residTable"></table></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>历史校准</h2>
+      <div id="calList"></div>
+    </div>
+  </main>
+
+  <script src="/vendor/echarts.min.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/common.js"></script>
+  <script src="/js/calibration.js"></script>
+</body>
+</html>

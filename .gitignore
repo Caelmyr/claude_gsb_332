@@ -10,6 +10,7 @@ data/runs/
 data/experiments/
 data/reports/
 data/exports/
+data/calibrations/
 *.tmp
 
 # OS / editor

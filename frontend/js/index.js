@@ -8,6 +8,7 @@ const CARDS = [
   { file: "intervention.html", icon: "💉", title: "干预措施", desc: "在运行中施加政策 / 药物 / 捕杀等干预并查看日志。" },
   { file: "replay.html", icon: "⏪", title: "回放与时间轴", desc: "拖动时间轴快速回放任意时间步的个体快照。" },
   { file: "compare.html", icon: "⚖️", title: "对比实验", desc: "多组参数并行运行，叠加对比不同策略的效果。" },
+  { file: "calibration.html", icon: "🎯", title: "参数校准", desc: "给定真实观测曲线，自动搜索最优参数并叠加对比、给出误差与诊断。" },
   { file: "report.html", icon: "📋", title: "报告生成", desc: "自动汇总峰值、终态与领域小结，生成运行报告。" },
   { file: "export.html", icon: "💾", title: "数据导出", desc: "导出统计 CSV、完整运行 JSON 或个体状态 JSON。" },
   { file: "history.html", icon: "🗂", title: "历史场景", desc: "浏览历史场景、运行与实验，一键重新打开或回放。" },

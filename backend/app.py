@@ -15,6 +15,8 @@ from typing import Any, Dict
 from flask import Flask, jsonify, request, send_file, send_from_directory
 
 from . import catalog, export, models, report, storage, util
+from .calibration.target import parse_target, parse_target_csv, prepare_target
+from .calibration_manager import calibration_manager
 from .run_manager import manager
 
 FRONTEND_DIR = os.path.join(
@@ -305,6 +307,97 @@ def create_app() -> Flask:
         if not storage.delete_experiment(exp_id):
             return _err(KeyError(f"experiment not found: {exp_id}"), 404)
         return jsonify({"deleted": exp_id})
+
+    # ------------------------------------------------------------------ #
+    # Calibration (parameter fitting against a target curve)
+    # ------------------------------------------------------------------ #
+    @app.route("/api/calibrations", methods=["GET"])
+    def list_calibrations():
+        return jsonify({"calibrations": calibration_manager.list()})
+
+    @app.route("/api/calibrations/preview", methods=["POST"])
+    def preview_target():
+        """Clean/validate a target curve without running the search."""
+        data = _json()
+        raw = data.get("csv_text")
+        if raw is not None and str(raw).strip():
+            rows = parse_target_csv(str(raw),
+                                    time_col=data.get("time_col"),
+                                    value_col=data.get("value_col"))
+        else:
+            rows = parse_target(data.get("target_points") or data.get("target") or {},
+                                time_key=str(data.get("time_key", "t")),
+                                value_key=str(data.get("value_key", "y")),
+                                weight_key=data.get("weight_key"))
+        prepared = prepare_target(rows,
+                                  outlier_mode=str(data.get("outlier_mode", "flag")))
+        return jsonify({"summary": prepared.summary(),
+                        "points": [p.to_dict() for p in prepared.points],
+                        "dropped": prepared.dropped,
+                        "warnings": prepared.warnings,
+                        "errors": prepared.errors})
+
+    @app.route("/api/calibrations", methods=["POST"])
+    def create_calibration():
+        data = _json()
+        if not catalog.known_model(str(data.get("domain", "")),
+                                   str(data.get("model", ""))):
+            return _err(ValueError("未知或缺失 domain/model"), 400)
+        # CSV upload is accepted here too.
+        if data.get("csv_text"):
+            data["target_points"] = parse_target_csv(
+                str(data["csv_text"]), time_col=data.get("time_col"),
+                value_col=data.get("value_col"))
+        try:
+            record = calibration_manager.start(data)
+        except ValueError as exc:
+            return _err(exc, 400)
+        return jsonify(record), 201
+
+    @app.route("/api/calibrations/<cal_id>", methods=["GET"])
+    def get_calibration(cal_id: str):
+        rec = calibration_manager.get(cal_id)
+        if rec is None:
+            return _err(KeyError(f"calibration not found: {cal_id}"), 404)
+        return jsonify(rec)
+
+    @app.route("/api/calibrations/<cal_id>", methods=["DELETE"])
+    def delete_calibration(cal_id: str):
+        if not calibration_manager.delete(cal_id):
+            return _err(KeyError(f"calibration not found: {cal_id}"), 404)
+        return jsonify({"deleted": cal_id})
+
+    @app.route("/api/calibrations/<cal_id>/stop", methods=["POST"])
+    def stop_calibration(cal_id: str):
+        if not calibration_manager.stop(cal_id):
+            return _err(KeyError(f"calibration not found: {cal_id}"), 404)
+        return jsonify({"stopping": cal_id})
+
+    @app.route("/api/calibrations/<cal_id>/apply", methods=["POST"])
+    def apply_calibration(cal_id: str):
+        """Create a run from the best-fit parameters (configured scene)."""
+        rec = calibration_manager.get(cal_id)
+        if rec is None:
+            return _err(KeyError(f"calibration not found: {cal_id}"), 404)
+        if rec.get("status") != "finished" or not rec.get("best_params"):
+            return _err(ValueError("校准尚未成功完成，无法应用最优参数"), 409)
+        data = _json()
+        scene_id = data.get("scene_id")
+        scene = storage.load_scene(scene_id) if scene_id else None
+        if scene is None:
+            base = rec.get("input", {}).get("base_config", {})
+            scene = {"name": f"{rec['name']} · 最优参数",
+                     "domain": rec["domain"], "model": rec["model"],
+                     "config": {**base, **rec["best_params"]},
+                     "interventions": rec.get("spec", {})
+                                           .get("interventions", [])}
+        else:
+            scene["config"] = {**scene.get("config", {}), **rec["best_params"]}
+        scene_obj = models.Scene.from_dict(scene)
+        meta = manager.create_run(
+            scene_obj, name=data.get("name", f"{rec['name']} · 最优参数运行"),
+            seed=int(data.get("seed", rec.get("seed", 0))))
+        return jsonify(meta), 201
 
     # ------------------------------------------------------------------ #
     # Reports

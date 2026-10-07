@@ -29,6 +29,7 @@ function esc(s) {
 function fmt(v, digits = 2) {
   if (v == null) return "—";
   if (typeof v === "number") {
+    if (!Number.isFinite(v)) return "—";
     if (Number.isInteger(v)) return String(v);
     return v.toFixed(digits);
   }

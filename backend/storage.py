@@ -34,7 +34,7 @@ from typing import Any, Dict, List, Optional
 DATA_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
 
-_DIRS = ("scenes", "runs", "experiments", "reports", "exports")
+_DIRS = ("scenes", "runs", "experiments", "reports", "exports", "calibrations")
 
 
 def ensure_dirs() -> None:
@@ -286,6 +286,48 @@ def list_experiments() -> List[Dict[str, Any]]:
         if exp:
             out.append(exp)
     out.sort(key=lambda e: e.get("created_at", ""), reverse=True)
+    return out
+
+
+# --------------------------------------------------------------------------- #
+# Calibrations (parameter fitting against target curves)
+# --------------------------------------------------------------------------- #
+def calibrations_dir() -> str:
+    return os.path.join(DATA_DIR, "calibrations")
+
+
+def calibration_path(cal_id: str) -> str:
+    return os.path.join(calibrations_dir(), f"{cal_id}.json")
+
+
+def save_calibration(cal: Dict[str, Any]) -> None:
+    atomic_write_json(calibration_path(cal["id"]), cal)
+
+
+def load_calibration(cal_id: str) -> Optional[Dict[str, Any]]:
+    return read_json(calibration_path(cal_id))
+
+
+def delete_calibration(cal_id: str) -> bool:
+    return delete_file(calibration_path(cal_id))
+
+
+def list_calibrations() -> List[Dict[str, Any]]:
+    out: List[Dict[str, Any]] = []
+    d = calibrations_dir()
+    if not os.path.isdir(d):
+        return out
+    for name in os.listdir(d):
+        if not name.endswith(".json"):
+            continue
+        cal = read_json(os.path.join(d, name))
+        if cal:
+            # Keep list payloads small: the full evaluation log + overlay stay
+            # one GET away via load_calibration.
+            out.append({k: v for k, v in cal.items()
+                        if k not in ("evaluations", "overlay", "residuals",
+                                     "target_points")})
+    out.sort(key=lambda c: c.get("created_at", ""), reverse=True)
     return out
 
 

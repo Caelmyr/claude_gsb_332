@@ -14,6 +14,7 @@
 #   ./run.sh --stop              # stop a background instance started above
 #   ./run.sh --venv              # create/use a local .venv and install deps
 #   ./run.sh --no-seed           # do not seed example scenes
+#   ./run.sh --test              # run smoke + calibration tests and exit
 # =============================================================================
 
 set -euo pipefail
@@ -27,6 +28,7 @@ SEED=1
 USE_VENV=0
 BACKGROUND=0
 STOP=0
+TEST=0
 PID_FILE="$SCRIPT_DIR/.run/server.pid"
 LOG_FILE="$SCRIPT_DIR/.run/server.log"
 
@@ -38,6 +40,7 @@ while [[ $# -gt 0 ]]; do
     --stop)       STOP=1; shift ;;
     --venv)       USE_VENV=1; shift ;;
     --no-seed)    SEED=0; shift ;;
+    --test)       TEST=1; shift ;;
     -h|--help)    sed -n '2,20p' "$0"; exit 0 ;;
     *) echo "unknown option: $1" >&2; exit 1 ;;
   esac
@@ -71,6 +74,15 @@ if [[ $USE_VENV -eq 1 ]]; then
   # shellcheck disable=SC1091
   source "$SCRIPT_DIR/.venv/bin/activate"
   echo "using virtualenv: $SCRIPT_DIR/.venv"
+fi
+
+if [[ $TEST -eq 1 ]]; then
+  echo "== running smoke tests =="
+  python3 "$SCRIPT_DIR/tests/smoke.py" || exit 1
+  echo
+  echo "== running calibration tests =="
+  python3 "$SCRIPT_DIR/tests/test_calibration.py" || exit 1
+  exit 0
 fi
 
 if ! python3 -c "import flask" >/dev/null 2>&1; then

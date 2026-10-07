@@ -9,6 +9,7 @@ const PAGES = [
   { file: "intervention.html", label: "干预措施" },
   { file: "replay.html", label: "回放与时间轴" },
   { file: "compare.html", label: "对比实验" },
+  { file: "calibration.html", label: "参数校准" },
   { file: "report.html", label: "报告生成" },
   { file: "export.html", label: "数据导出" },
   { file: "history.html", label: "历史场景" },
