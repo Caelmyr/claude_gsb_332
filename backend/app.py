@@ -14,7 +14,8 @@ from typing import Any, Dict
 
 from flask import Flask, jsonify, request, send_file, send_from_directory
 
-from . import catalog, export, models, report, storage, util
+from . import calibration, catalog, export, models, report, storage, util
+from .calibration_manager import calibration_manager
 from .run_manager import manager
 
 FRONTEND_DIR = os.path.join(
@@ -307,6 +308,69 @@ def create_app() -> Flask:
         return jsonify({"deleted": exp_id})
 
     # ------------------------------------------------------------------ #
+    # Parameter calibration
+    # ------------------------------------------------------------------ #
+    @app.route("/api/calibrations", methods=["GET"])
+    def list_calibrations():
+        return jsonify({"calibrations": storage.list_calibrations()})
+
+    @app.route("/api/calibrations", methods=["POST"])
+    def create_calibration():
+        data = _json()
+        scene = storage.load_scene(data.get("scene_id", ""))
+        if scene is None:
+            return _err(KeyError(f"scene not found: {data.get('scene_id')}"), 404)
+        if not data.get("target"):
+            return _err(ValueError("请提供目标曲线数据（target）"), 400)
+        if not data.get("metric"):
+            return _err(ValueError("请选择用于拟合的统计指标（metric）"), 400)
+        if not data.get("params"):
+            return _err(ValueError("请至少选择一个待校准参数及其上下界"), 400)
+        try:
+            record = calibration_manager.create(scene, data)
+        except ValueError as exc:
+            return _err(exc, 400)
+        except Exception as exc:  # noqa: BLE001
+            return _err(exc, 500)
+        return jsonify(record), 201
+
+    @app.route("/api/calibrations/<cal_id>", methods=["GET"])
+    def get_calibration(cal_id: str):
+        cal = storage.load_calibration(cal_id)
+        if cal is None:
+            return _err(KeyError(f"calibration not found: {cal_id}"), 404)
+        return jsonify(cal)
+
+    @app.route("/api/calibrations/<cal_id>", methods=["DELETE"])
+    def delete_calibration(cal_id: str):
+        if not calibration_manager.delete(cal_id):
+            return _err(KeyError(f"calibration not found: {cal_id}"), 404)
+        return jsonify({"deleted": cal_id})
+
+    @app.route("/api/calibrations/<cal_id>/cancel", methods=["POST"])
+    def cancel_calibration(cal_id: str):
+        if storage.load_calibration(cal_id) is None:
+            return _err(KeyError(f"calibration not found: {cal_id}"), 404)
+        calibration_manager.cancel(cal_id)
+        return jsonify({"cancelling": cal_id})
+
+    @app.route("/api/calibrations/preview", methods=["POST"])
+    def preview_target():
+        """只解析+清洗目标曲线，供前端在提交前检查缺失/异常点识别是否合理。"""
+        data = _json()
+        try:
+            target = calibration.clean_target(
+                data.get("target", ""),
+                detect_outliers=bool(data.get("detect_outliers", True)),
+                drop_outliers=bool(data.get("drop_outliers", False)),
+                outlier_window=int(data.get("outlier_window", 5)),
+                outlier_sigma=float(data.get("outlier_sigma", 4.0)))
+        except ValueError as exc:
+            return _err(exc, 400)
+        return jsonify({"summary": target.summary(),
+                        "points": [p.to_dict() for p in target.points]})
+
+    # ------------------------------------------------------------------ #
     # Reports
     # ------------------------------------------------------------------ #
     @app.route("/api/reports/<run_id>", methods=["GET"])
@@ -352,6 +416,7 @@ def create_app() -> Flask:
             "scenes": storage.list_scenes(),
             "runs": storage.list_runs(),
             "experiments": storage.list_experiments(),
+            "calibrations": storage.list_calibrations(),
         })
 
     return app

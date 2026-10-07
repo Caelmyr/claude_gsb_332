@@ -214,6 +214,18 @@ td.num, th.num { text-align: right; font-family: var(--mono); }
 }
 .notice.warn { border-color: #5b4a1f; color: var(--orange); }
 .notice.error { border-color: #5b2a2a; color: var(--red); }
+.notice.ok { border-color: #2c5238; color: var(--green); }
+
+/* KPI tiles (stats / calibration pages) */
+.kpi {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+}
+.kpi-label { color: var(--muted); font-size: 12px; }
+.kpi-value { font-size: 22px; font-weight: 700; margin: 3px 0; font-family: var(--mono); }
+.kpi-sub { color: var(--muted); font-size: 11px; }
 
 .tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
 .tab {

@@ -11,6 +11,7 @@ Layout (all under :data:`DATA_DIR`)::
           steps/<nnnnnnnn>.json     # full per-step snapshot (individuals + grid)
           report.json               # generated report
       experiments/<exp_id>.json     # comparison experiments (param groups)
+      calibrations/<cal_id>.json   # parameter calibration jobs + results
       exports/                      # exported CSV / JSON files
 
 Every write goes through :func:`atomic_write_json`: serialise, write to a temp
@@ -34,7 +35,8 @@ from typing import Any, Dict, List, Optional
 DATA_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
 
-_DIRS = ("scenes", "runs", "experiments", "reports", "exports")
+_DIRS = ("scenes", "runs", "experiments", "reports", "exports",
+         "calibrations")
 
 
 def ensure_dirs() -> None:
@@ -298,3 +300,46 @@ def reports_dir() -> str:
 
 def exports_dir() -> str:
     return os.path.join(DATA_DIR, "exports")
+
+
+# --------------------------------------------------------------------------- #
+# Calibrations (parameter fitting against a target curve)
+# --------------------------------------------------------------------------- #
+def calibrations_dir() -> str:
+    return os.path.join(DATA_DIR, "calibrations")
+
+
+def calibration_path(cal_id: str) -> str:
+    return os.path.join(calibrations_dir(), f"{cal_id}.json")
+
+
+def save_calibration(cal: Dict[str, Any]) -> None:
+    atomic_write_json(calibration_path(cal["id"]), cal)
+
+
+def load_calibration(cal_id: str) -> Optional[Dict[str, Any]]:
+    return read_json(calibration_path(cal_id))
+
+
+def delete_calibration(cal_id: str) -> bool:
+    return delete_file(calibration_path(cal_id))
+
+
+def list_calibrations() -> List[Dict[str, Any]]:
+    """All calibrations as summary dicts (heavy fields stripped), newest first."""
+    out: List[Dict[str, Any]] = []
+    d = calibrations_dir()
+    if not os.path.isdir(d):
+        return out
+    for name in os.listdir(d):
+        if not name.endswith(".json"):
+            continue
+        cal = read_json(os.path.join(d, name))
+        if not cal:
+            continue
+        # 列表页不需要逐点对齐/历史/曲线这些可能很大的字段
+        out.append({k: v for k, v in cal.items()
+                    if k not in ("aligned", "sim_curve", "history",
+                                 "bound_checks", "target")})
+    out.sort(key=lambda c: c.get("created_at", ""), reverse=True)
+    return out

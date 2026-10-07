@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>参数校准 · 复杂系统模拟仿真平台</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="topnav" id="topnav"></nav>
+  <main class="container">
+    <h1 class="page-title">参数校准</h1>
+    <p class="page-sub">给定一条目标曲线（如真实感染人数），自动调整模型参数使仿真统计曲线逼近目标。确定性全局+局部搜索，输出拟合误差、最优参数与可信度诊断，结果可复现。</p>
+
+    <div class="card">
+      <h2>新建校准任务</h2>
+      <div class="grid grid-2">
+        <div class="field"><label>任务名称</label><input id="calName" placeholder="例如：拟合某市前 30 天感染数据"></div>
+        <div class="field"><label>基础场景</label><select id="calScene"></select></div>
+      </div>
+
+      <div class="grid grid-3">
+        <div class="field"><label>拟合的统计指标</label><select id="calMetric"></select></div>
+        <div class="field"><label>仿真步数</label><input id="calSteps" type="number" value="120" min="1"></div>
+        <div class="field"><label>重复轨迹数（随机仿真降方差）</label><input id="calReplicates" type="number" value="1" min="1" max="20"></div>
+      </div>
+
+      <h3>目标曲线数据</h3>
+      <p class="muted small" style="margin:0 0 6px">
+        粘贴 CSV（<span class="mono">time,value[,weight]</span>，首行可为表头）或 JSON
+        （<span class="mono">[[t,v],…]</span>）；缺测留空或写 null，重复时间点会按权重合并。
+        也可从一次已有运行导入某条统计曲线作为目标。
+      </p>
+      <div class="row gap-6" style="margin-bottom:8px">
+        <select id="importRun" style="max-width:380px"><option value="">— 也可从已有运行导入目标 —</option></select>
+        <select id="importMetric" style="max-width:180px"></select>
+        <button class="btn small" id="importBtn">导入为目标</button>
+      </div>
+      <textarea id="calTarget" rows="5" placeholder="time,value&#10;0,5&#10;2,9&#10;4,null&#10;6,18&#10;8,27"></textarea>
+      <div class="row gap-6" style="margin-top:8px">
+        <button class="btn small" id="previewBtn">检查目标数据（缺失/异常点）</button>
+        <span class="muted small" id="previewInfo"></span>
+      </div>
+
+      <h3 style="margin-top:16px">待校准参数与上下界</h3>
+      <div id="paramRows"></div>
+      <p class="muted small" style="margin:6px 0 0">勾选参数并设置搜索上下界；未勾选的参数固定为场景当前值。</p>
+
+      <h3 style="margin-top:16px">校准设置（高级）</h3>
+      <div class="grid grid-4">
+        <div class="field"><label>损失函数</label>
+          <select id="calLoss">
+            <option value="nrmse">归一化 RMSE（默认，稳健）</option>
+            <option value="mse">RMSE（原始量纲）</option>
+            <option value="mae">MAE（平均绝对误差）</option>
+            <option value="huber">Huber（抗异常点）</option>
+          </select>
+        </div>
+        <div class="field"><label>主种子（可复现）</label><input id="calSeed" type="number" value="12345"></div>
+        <div class="field"><label>全局采样点数</label><input id="calGlobal" type="number" value="12" min="2" max="200"></div>
+        <div class="field"><label>局部搜索起点数</label><input id="calLocal" type="number" value="3" min="1" max="10"></div>
+        <div class="field"><label>最大评估次数</label><input id="calMaxEvals" type="number" value="120" min="10" max="2000"></div>
+        <div class="field"><label>时间偏移 time_offset</label><input id="calT0" type="number" value="0" step="any"></div>
+        <div class="field"><label>时间缩放 time_scale</label><input id="calTS" type="number" value="1" step="any" min="0.0001"></div>
+        <div class="field"><label>异常点处理</label>
+          <select id="calOutlier">
+            <option value="weight">Hampel 检测，置零权重（推荐）</option>
+            <option value="drop">Hampel 检测，直接剔除</option>
+            <option value="off">不检测</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:8px">
+        <button class="btn primary" id="startBtn">开始校准</button>
+        <button class="btn" id="cancelBtn" style="display:none">取消</button>
+        <span class="muted small" id="runStatus"></span>
+      </div>
+    </div>
+
+    <div class="card" id="resultCard" style="display:none">
+      <div class="row between">
+        <h2 id="resultTitle" style="margin:0">校准结果</h2>
+        <span id="resultBadge"></span>
+      </div>
+      <div class="grid grid-4" id="kpis" style="margin:14px 0"></div>
+      <div id="warnings"></div>
+      <div class="grid grid-2" style="margin-top:8px">
+        <div>
+          <h3>最优参数组合</h3>
+          <table><thead><tr><th>参数</th><th class="num">最优值</th><th class="num">下界</th><th class="num">上界</th><th>边界</th></tr></thead>
+          <tbody id="bestParams"></tbody></table>
+          <p class="muted small" id="plateauInfo" style="margin-top:8px"></p>
+        </div>
+        <div>
+          <h3>收敛过程（每次评估的误差）</h3>
+          <div class="chart" id="historyChart" style="height:240px"></div>
+        </div>
+      </div>
+      <h3 style="margin-top:14px">仿真曲线 vs 目标曲线</h3>
+      <div id="chartLegend" class="muted small" style="margin-bottom:4px"></div>
+      <div class="chart" id="overlayChart" style="height:380px"></div>
+      <div class="row gap-6" style="margin-top:8px">
+        <button class="btn small" id="applyParams">将最优参数写回场景配置</button>
+        <a class="btn small" id="downloadResult" download="calibration_result.json">下载完整结果 JSON</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>已有校准任务</h2>
+      <div id="calList"></div>
+    </div>
+  </main>
+
+  <script src="/vendor/echarts.min.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/common.js"></script>
+  <script src="/js/calibration.js"></script>
+</body>
+</html>
